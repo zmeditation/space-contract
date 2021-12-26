@@ -1,0 +1,26 @@
+{
+  "name": "space",
+  "version": "1.0.0",
+  "description": "Contract for Unicial's SPACE",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "scripts/test.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unicial/space-contract.git"
+  },
+  "keywords": [
+    "SPACE",
+    "Zilionixx",
+    "Unicial"
+  ],
+  "author": "dotfund",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/unicial/space-contract/issues"
+  },
+  "homepage": "https://github.com/unicial/space-contract#readme"
+}
