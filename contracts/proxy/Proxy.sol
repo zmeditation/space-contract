@@ -42,9 +42,14 @@ contract Proxy is Storage, DelegateProxy, Ownable {
      * @param data The initial data of parameter.
      */
     function upgrade(IApplication newContract, bytes calldata data) public onlyProxyOwner {
-        currentContract = newContract;
+        currentContract = address(newContract);
         IApplication(newContract).initialize(data);
 
         emit Upgrade(newContract, data);
+    }
+
+    fallback() external payable {
+        require(currentContract != address(0), "If app code has not been set yet, do not call");
+        delegateForward(currentContract, msg.data);
     }
 }

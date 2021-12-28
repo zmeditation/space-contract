@@ -17,8 +17,8 @@ contract("SPACEProxy", (accounts) => {
   console.log(otherOwner);
 
   const params = {
-    gas: 7e6,
-    gasPrice: 21e9,
+    gas: 5e6,
+    gasPrice: 5e9,
     from: creator,
   };
 
@@ -28,6 +28,8 @@ contract("SPACEProxy", (accounts) => {
       console.log(proxy.address);
     });
 
-    it("should upgrade proxy by owner", async () => {});
+    it("should upgrade proxy by owner", async () => {
+      const { logs } = await proxy.upgrade();
+    });
   });
 });
