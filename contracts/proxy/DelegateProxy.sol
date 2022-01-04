@@ -2,18 +2,22 @@
 pragma solidity ^0.8.5;
 
 contract DelegateProxy {
-    function delegateForward(address _dst, bytes calldata _calldata) internal {
+    function delegateForward(address _dst) internal {
         require(isContract(_dst), "The destination address is not a contract");
 
         assembly {
-            let result := delegatecall(sub(gas(), 10000), _dst, add(_calldata.offset, 0x20), mload(_calldata.offset), 0, 0)
-            let size := returndatasize()
+            calldatacopy(0, 0, calldatasize())
+            let result := delegatecall(gas(), _dst, 0, calldatasize(), 0, 0)
+            returndatacopy(0, 0, returndatasize())
 
-            let ptr := mload(0x40)
-            returndatacopy(ptr, 0, size)
-
-            switch result case 0 { revert(ptr, size) }
-            default { return(ptr, size) }
+            switch result
+            // delegatecall returns 0 on error.
+            case 0 {
+                revert(0, returndatasize())
+            }
+            default {
+                return(0, returndatasize())
+            }
         }
     }
 

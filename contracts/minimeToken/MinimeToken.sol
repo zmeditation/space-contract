@@ -131,7 +131,7 @@ contract MiniMeToken is Controlled {
         uint8 _decimalUnits,
         string memory _tokenSymbol,
         bool _transfersEnabled
-    )  public
+    )
     {
         tokenFactory = _tokenFactory;
         name = _tokenName;                                 // Set the name
@@ -254,7 +254,7 @@ contract MiniMeToken is Controlled {
     /// @param _spender The address of the account able to transfer the tokens
     /// @return remaining Amount of remaining tokens of _owner that _spender is allowed
     ///  to spend
-    function allowance(address _owner, address _spender) public returns (uint256 remaining) {
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
         return allowed[_owner][_spender];
     }
 
@@ -431,7 +431,7 @@ contract MiniMeToken is Controlled {
     /// @param checkpoints The history of values being queried
     /// @param _block The block number to retrieve the value at
     /// @return The number of tokens being queried
-    function getValueAt(Checkpoint[] storage checkpoints, uint _block) internal returns (uint) {
+    function getValueAt(Checkpoint[] storage checkpoints, uint _block) internal view returns (uint) {
         if (checkpoints.length == 0)
             return 0;
 
@@ -442,17 +442,17 @@ contract MiniMeToken is Controlled {
             return 0;
 
         // Binary search of the value in the array
-        uint min = 0;
+        uint _min = 0;
         uint max = checkpoints.length-1;
-        while (max > min) {
-            uint mid = (max + min + 1) / 2;
+        while (max > _min) {
+            uint mid = (max + _min + 1) / 2;
             if (checkpoints[mid].fromBlock<=_block) {
-                min = mid;
+                _min = mid;
             } else {
                 max = mid-1;
             }
         }
-        return checkpoints[min].value;
+        return checkpoints[_min].value;
     }
 
     /// @dev `updateValueAtNow` used to update the `balances` map and the
@@ -476,7 +476,7 @@ contract MiniMeToken is Controlled {
     /// @dev Internal function to determine if an address is a contract
     /// @param _addr The address being queried
     /// @return True if `_addr` is a contract
-    function isContract(address _addr) internal returns(bool) {
+    function isContract(address _addr) internal view returns(bool) {
         uint size;
         if (_addr == address(0))
             return false;

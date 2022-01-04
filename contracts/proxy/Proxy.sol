@@ -41,15 +41,46 @@ contract Proxy is Storage, DelegateProxy, Ownable {
      * @param newContract The address of the updated smart contract address.
      * @param data The initial data of parameter.
      */
-    function upgrade(IApplication newContract, bytes calldata data) public onlyProxyOwner {
+    function upgradeDelegate(IApplication newContract, bytes calldata data) public onlyProxyOwner {
         currentContract = address(newContract);
         IApplication(newContract).initialize(data);
 
         emit Upgrade(newContract, data);
     }
 
-    fallback() external payable {
+    /**
+     * @dev Fallback function that delegates calls to the address returned by `_implementation()`. Will run if no other
+     * function in the contract matches the call data.
+     */
+    fallback() external payable virtual {
+        _fallback();
+    }
+
+    /**
+     * @dev Delegates the current call to the address returned by `_implementation()`.
+     *
+     * This function does not return to its internall call site, it will return directly to the external caller.
+     */
+    function _fallback() internal virtual {
+        _beforeFallback();
+
         require(currentContract != address(0), "If app code has not been set yet, do not call");
-        delegateForward(currentContract, msg.data);
+        delegateForward(currentContract);
+    }
+
+    /**
+     * @dev Hook that is called before falling back to the implementation. Can happen as part of a manual `_fallback`
+     * call, or as part of the Solidity `fallback` or `receive` functions.
+     *
+     * If overriden should call `super._beforeFallback()`.
+     */
+    function _beforeFallback() internal virtual {}
+
+    /**
+     * @dev Fallback function that delegates calls to the address returned by `_implementation()`. Will run if call data
+     * is empty.
+     */
+    receive() external payable virtual {
+        _fallback();
     }
 }
