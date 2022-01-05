@@ -4,8 +4,9 @@ pragma solidity ^0.8.5;
 import "../Storage.sol";
 import "../erc821/FullAssetRegistry.sol";
 import "./ISPACERegistry.sol";
+import "../proxy/Ownable.sol";
 
-contract SPACERegistry is Storage, FullAssetRegistry, ISPACERegistry {
+contract SPACERegistry is Storage, Ownable, FullAssetRegistry, ISPACERegistry {
     function initialize(bytes calldata) external {
         _name = "Unicial SPACE";
         _symbol = "UNIS";
@@ -192,7 +193,76 @@ contract SPACERegistry is Storage, FullAssetRegistry, ISPACERegistry {
     }
 
     function updateSpaceData(int x, int y, string memory data) external {
+        _updateSpaceData(x, y, data);
+    }
 
+    function updateManySpaceData(int[] memory x, int[] memory y, string memory data) external {
+        require(x.length > 0, "UNICIAL: You should supply at least one coordinate");
+        require(x.length == y.length, "UNICIAL: The coordinates should have the same length");
+
+        for (uint i = 0; i < x.length; i++) {
+            _updateSpaceData(x[i], y[i], data);
+        }
+    }
+
+    // ===========================================================================
+    // ************************  Proxy Manager Functions  ************************
+    // ===========================================================================
+
+    /**
+     * @dev Set a new space balance minime token
+     * @param _newSpaceBalance address of the new space balance token
+     */
+    function setSpaceBalanceToken(address _newSpaceBalance) onlyProxyOwner external {
+        require(_newSpaceBalance != address(0), "UNICIAL: New spaceBalance should not be zero address");
+        emit SetSpaceBalanceToken(address(spaceBalance), _newSpaceBalance);
+        spaceBalance = IMiniMeToken(_newSpaceBalance);
+    }
+
+    // ===========================================================================
+    // *************************  Proxy Other Functions  *************************
+    // ===========================================================================
+
+    function registerBalance() external {
+        require(!registeredBalance[msg.sender], "UNICIAL: Register Balance::The user is already registered");
+
+        // Get balance of the sender
+        uint256 currentBalance = spaceBalance.balanceOf(msg.sender);
+        if (currentBalance > 0) {
+            require(spaceBalance.destroyTokens(msg.sender, currentBalance), 
+            "UNICIAL: Register Balance::Could not destroy tokens");
+        }
+
+        // Set balance as registered
+        registeredBalance[msg.sender] = true;
+
+        // Get SPACE balance
+        uint256 newBalance = _balanceOf(msg.sender);
+
+        // Generate Tokens
+        require(spaceBalance.generateTokens(msg.sender, newBalance),
+            "UNICIAL: Register Balance::Could not generate tokens");
+    }
+
+    function unregisterBalance() external {
+        require(registeredBalance[msg.sender], "UNICIAL: Unregister Balance::The user not registered");
+
+        // Set balance as unregistered
+        registeredBalance[msg.sender] = false;
+
+        // Get balance
+        uint256 currentBalance = spaceBalance.balanceOf(msg.sender);
+
+        // Destroy Tokens
+        require(spaceBalance.destroyTokens(msg.sender, currentBalance),
+            "UNICIAL: Unregister Balance::Could not destroy tokens");
+    }
+
+    function _doTransferFrom(address from, address to, uint256 assetId, bytes memory userData, bool doCheck) internal override {
+        updateOperator[assetId] = address(0);
+        _updateSpaceBalance(from, to);
+
+        super._doTransferFrom(from, to, assetId, userData, doCheck);
     }
 
     /**

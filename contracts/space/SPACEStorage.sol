@@ -19,4 +19,6 @@ contract SPACEStorage {
 
     // Estate registry contract
     IEstateRegistry public estateRegistry;
+
+    mapping (uint256 => address) public updateOperator;
 }

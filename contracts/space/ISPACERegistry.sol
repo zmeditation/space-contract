@@ -8,4 +8,5 @@ interface ISPACERegistry {
 
     event Update(uint256 indexed assetId, address indexed owner, address indexed operator, string data);
     event UpdateOperator(uint256 indexed assetId, address indexed operator);
+    event SetSpaceBalanceToken(address indexed _previousSpaceBalance, address indexed _newSpaceBalance);
 }

@@ -18,6 +18,9 @@
  *
  */
 
+require("babel-register");
+require("babel-polyfill");
+
 const HDWalletProvider = require("@truffle/hdwallet-provider");
 
 const fs = require("fs");

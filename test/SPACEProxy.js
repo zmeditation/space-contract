@@ -1,3 +1,4 @@
+import assertRevert from "./helpers/assertRevert";
 const BigNumber = web3.utils.BN;
 
 const SPACEProxy = artifacts.require("SPACEProxy");
@@ -17,13 +18,17 @@ require("chai")
   .should();
 
 contract("SPACEProxy", (accounts) => {
-  console.log(accounts);
-
   const [creator, hacker, otherOwner] = accounts;
+  let proxy = null;
+  let registry = null;
+  let space = null;
 
-  console.log(creator);
-  console.log(hacker);
-  console.log(otherOwner);
+  console.log("   ================ Account Info ==============");
+  console.log(accounts);
+  console.log("  *** Creator     : ", creator);
+  console.log("  *** Hacker      : ", hacker);
+  console.log("  *** Other Owner : ", otherOwner);
+  console.log("   ============================================");
 
   const params = {
     gas: 7e6,
@@ -37,9 +42,10 @@ contract("SPACEProxy", (accounts) => {
       registry = await SPACERegistry.new(params);
       space = await SPACERegistry.at(proxy.address);
 
-      console.log(proxy.address);
-      console.log(registry.address);
-      console.log(space.address);
+      console.log("   ================= Before Each ==============");
+      console.log("   Proxy Address    : ", proxy.address);
+      console.log("   Registry Address : ", registry.address);
+      console.log("   ============================================");
     });
 
     it("should upgrade proxy by owner", async () => {
@@ -50,22 +56,33 @@ contract("SPACEProxy", (accounts) => {
       );
       await checkUpgradeLog(logs[0], registry.address, creator);
 
-      const spaceName = await registry.name();
-      console.log(spaceName);
+      const currentContract = await space.currentContract();
+      currentContract.should.be.equal(registry.address);
 
-      const currentContract = await proxy.currentContract();
-      console.log(currentContract);
+      const proxyOwner = await space.proxyOwner();
+      proxyOwner.should.be.equal(creator);
+
+      const ownerAddress = await space.owner();
+      ownerAddress.should.be.equal(creator);
+    });
+    it("should thorw if not owner upgrade proxy", async () => {
+      await assertRevert(
+        proxy.upgradeDelegate(
+          registry.address,
+          hacker,
+          Object.assign({}, params, { from: hacker })
+        )
+      );
     });
     it("should proxy function call", async () => {
       await proxy.upgradeDelegate(registry.address, creator, params);
+
       await space.initialize(creator, params);
 
       const spaceName = await space.name();
+      spaceName.should.be.equal("Unicial SPACE");
 
-      console.log(spaceName);
-
-      const { logs } = await space.assignNewRood(0, 0, accounts[0], params);
-      console.log(logs);
+      await space.assignNewRood(0, 0, accounts[0], params);
     });
   });
 });

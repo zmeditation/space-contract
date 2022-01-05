@@ -333,6 +333,7 @@ contract ERC721Base is AssetRegistryStorage, IERC721Base, ERC165 {
   )
     onlyAuthorized(assetId)
     internal
+    virtual
   {
     _moveToken(from, to, assetId, userData, doCheck);
   }
