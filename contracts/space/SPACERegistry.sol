@@ -35,12 +35,12 @@ contract SPACERegistry is Storage, Ownable, FullAssetRegistry, ISPACERegistry {
     // *********************  SPACE creating modules  **************************
     // =========================================================================
 
-    function assignNewRood(int x, int y, address beneficiary) external onlyDeployer {
+    function assignNewRood(int x, int y, address beneficiary) external override onlyDeployer {
         _generate(_encodeTokenId(x, y), beneficiary);
         _updateSpaceBalance(address(0), beneficiary);
     }
 
-    function assignMultipleRoods(int[] memory x, int[] memory y, address beneficiary) external onlyDeployer {
+    function assignMultipleRoods(int[] memory x, int[] memory y, address beneficiary) external override onlyDeployer {
         for (uint i = 0; i < x.length; i++) {
             _generate(_encodeTokenId(x[i], y[i]), beneficiary);
             _updateSpaceBalance(address(0), beneficiary);
@@ -51,7 +51,7 @@ contract SPACERegistry is Storage, Ownable, FullAssetRegistry, ISPACERegistry {
     // *********************  SPACE getter functions  ***************************
     // ==========================================================================
 
-    function encodeTokenId(int x, int y) external pure returns (uint) {
+    function encodeTokenId(int x, int y) external pure override returns (uint) {
         return _encodeTokenId(x, y);
     }
 
@@ -64,7 +64,7 @@ contract SPACERegistry is Storage, Ownable, FullAssetRegistry, ISPACERegistry {
         return ((uint(x) * factor) & clearLow) | (uint(y) & clearHigh);
     }
 
-    function decodeTokenId(uint value) external pure returns (int, int) {
+    function decodeTokenId(uint value) external pure override returns (int, int) {
         return _decodeTokenId(value);
     }
 
@@ -89,7 +89,7 @@ contract SPACERegistry is Storage, Ownable, FullAssetRegistry, ISPACERegistry {
         return _exists(_encodeTokenId(x, y));
     }
 
-    function exists(int x, int y) external view returns (bool) {
+    function exists(int x, int y) external view override returns (bool) {
         return _exists(x, y);
     }
 
@@ -97,11 +97,11 @@ contract SPACERegistry is Storage, Ownable, FullAssetRegistry, ISPACERegistry {
         return _ownerOf(_encodeTokenId(x, y));
     }
 
-    function ownerOfSpace(int x, int y) external view returns (address) {
+    function ownerOfSpace(int x, int y) external view override returns (address) {
         return _ownerOfSpace(x, y);
     }
 
-    function ownerOfSpaceMany(int[] memory x, int[] memory y) external view returns (address[] memory) {
+    function ownerOfSpaceMany(int[] memory x, int[] memory y) external view override returns (address[] memory) {
         require(x.length > 0, "UNICIAL: You should supply at least one coordinate");
         require(x.length == y.length, "UNICIAL: The coordinates should have the same length");
 
@@ -114,7 +114,7 @@ contract SPACERegistry is Storage, Ownable, FullAssetRegistry, ISPACERegistry {
         return addresses;
     }
 
-    function spaceOf(address owner) external view returns (int[] memory, int[] memory) {
+    function spaceOf(address owner) external view override returns (int[] memory, int[] memory) {
         uint256 length = _assetsOf[owner].length;
         int[] memory x = new int[](length);
         int[] memory y = new int[](length);
@@ -217,6 +217,36 @@ contract SPACERegistry is Storage, Ownable, FullAssetRegistry, ISPACERegistry {
         require(_newSpaceBalance != address(0), "UNICIAL: New spaceBalance should not be zero address");
         emit SetSpaceBalanceToken(address(spaceBalance), _newSpaceBalance);
         spaceBalance = IMiniMeToken(_newSpaceBalance);
+    }
+
+    // ===========================================================================
+    // **************************  Proxy Authorization  **************************
+    // ===========================================================================
+
+    function _isUpdateAuthorized(address operator, uint256 assetId) internal view returns (bool) {
+        address owner = _ownerOf(assetId);
+
+        return owner == operator || updateOperator[assetId] == operator || updateManager[owner][operator];
+    }
+
+    function isUpdateAuthorized(address operator, uint256 assetId) external view returns (bool) {
+        return _isUpdateAuthorized(operator, assetId);
+    }
+
+    function authorizeDeploy(address beneficiary) external onlyProxyOwner {
+        require(beneficiary != address(0), "invalid address");
+        require(authorizedDeploy[beneficiary] == false, "address is already authorized");
+
+        authorizedDeploy[beneficiary] = true;
+        emit DeployAuthorized(msg.sender, beneficiary);
+    }
+
+    function forbidDeploy(address beneficiary) external onlyProxyOwner {
+        require(beneficiary != address(0), "invalid address");
+        require(authorizedDeploy[beneficiary], "address is already forbidden");
+
+        authorizedDeploy[beneficiary] = false;
+        emit DeployForbidden(msg.sender, beneficiary);
     }
 
     // ===========================================================================

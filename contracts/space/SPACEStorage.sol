@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.5;
 
-import "../minimeToken/IMinimeToken.sol";
+import "../minimeToken/IMiniMeToken.sol";
 import "../estate/IEstateRegistry.sol";
 
 contract SPACEStorage {
@@ -21,4 +21,5 @@ contract SPACEStorage {
     IEstateRegistry public estateRegistry;
 
     mapping (uint256 => address) public updateOperator;
+    mapping (address => mapping(address => bool)) public updateManager;
 }
