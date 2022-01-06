@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.5;
 
-import "../minimeToken/IMiniMeToken.sol";
+import "../minimeToken/IMinimeToken.sol";
 import "../estate/IEstateRegistry.sol";
 
 contract SPACEStorage {
