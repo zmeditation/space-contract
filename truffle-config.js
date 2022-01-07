@@ -45,11 +45,20 @@ module.exports = {
     // options below to some value.
 
     development: {
-      host: "13.212.92.118", // Localhost (default: none)
+      host: "54.255.250.212", // Localhost (default: none)
       port: 80, // Standard Ethereum port (default: none)
       network_id: 93, // Any network (default: none)
-      provider: () => new HDWalletProvider(mnemonic, `http://13.212.92.118:80`),
+      provider: () =>
+        new HDWalletProvider(mnemonic, `http://54.255.250.212:80`),
       gas: 1800000,
+      gasPrice: 20000000000,
+    },
+    ganache: {
+      host: "localhost",
+      port: 7545,
+      provider: () => new HDWalletProvider(mnemonic, `http://localhost:7545`),
+      gas: 1800000,
+      network_id: 5777,
       gasPrice: 20000000000,
     },
     // Another network with more advanced options...
