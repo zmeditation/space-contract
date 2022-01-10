@@ -5,9 +5,9 @@ module.exports = async function (deployer) {
   console.log("\n3_deploy_EstateRegistry_contract");
   console.log("============================\n");
   // deployer.deploy(EstateRegistry);
-  const instance = await deployProxy(EstateRegistry, [42], {
-    deployer,
-    initializer: "initialize",
-  });
-  console.log("deployed", instance.address);
+  // const instance = await deployProxy(EstateRegistry, [42], {
+  //   deployer,
+  //   initializer: "initialize",
+  // });
+  // console.log("deployed", instance.address);
 };

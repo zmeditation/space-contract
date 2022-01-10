@@ -5,6 +5,8 @@ import assertRevert from "./helpers/assertRevert";
 const MiniMeToken = artifacts.require("MiniMeToken");
 const NONE = "0x0000000000000000000000000000000000000000";
 
+import createEstateFull from "./helpers/createEstateFull";
+
 import setupUnicialContracts, {
   SPACE_NAME,
   SPACE_SYMBOLE,
@@ -43,9 +45,14 @@ contract("SPACERegistry", (accounts) => {
   const sentByAnotherUser = { ...params, from: anotherUser };
   const sentByHacker = { ...params, from: hacker };
 
+  async function createEstate(xs, ys, owner, sendParams) {
+    return createEstateFull(contracts, xs, ys, owner, "", sendParams);
+  }
+
   beforeEach(async function () {
     contracts = await setupUnicialContracts(creator, params);
     space = contracts.space;
+    estate = contracts.estate;
 
     await space.authorizeDeploy(creator, sentByCreator);
     await space.assignNewRood(0, 1, user, sentByCreator);
@@ -125,33 +132,82 @@ contract("SPACERegistry", (accounts) => {
   //     });
   //   });
 
-  describe("SPACE GETTER FUNCTIONS", function () {
-    // describe("ownerOfSpace", function () {
-    //   it("gets the owner of a rood of Space", async function () {
-    //     const owner = await space.ownerOfSpace(0, 1);
-    //     owner.should.be.equal(user);
-    //   });
-    // });
+  // describe("SPACE GETTER FUNCTIONS", function () {
+  //   // describe("ownerOfSpace", function () {
+  //   //   it("gets the owner of a rood of Space", async function () {
+  //   //     const owner = await space.ownerOfSpace(0, 1);
+  //   //     owner.should.be.equal(user);
+  //   //   });
+  //   // });
 
-    // describe("ownerOfSpaceMany", function () {
-    //   it("gets the owners of a list of roods", async function () {
-    //     await space.assignNewRood(0, 5, anotherUser, sentByCreator);
-    //     const owners = await space.ownerOfSpaceMany([0, 0, 0], [1, 2, 5]);
+  //   // describe("ownerOfSpaceMany", function () {
+  //   //   it("gets the owners of a list of roods", async function () {
+  //   //     await space.assignNewRood(0, 5, anotherUser, sentByCreator);
+  //   //     const owners = await space.ownerOfSpaceMany([0, 0, 0], [1, 2, 5]);
 
-    //     owners[0].should.be.equal(user);
-    //     owners[1].should.be.equal(user);
-    //     owners[2].should.be.equal(anotherUser);
-    //   });
-    // });
+  //   //     owners[0].should.be.equal(user);
+  //   //     owners[1].should.be.equal(user);
+  //   //     owners[2].should.be.equal(anotherUser);
+  //   //   });
+  //   // });
 
-    describe("spaceOf", function () {
-      it("gets the rood coordinates for a certain owner", async function () {
-        await space.spaceOf(user);
-        // console.log(x[0]);
-        // web3.utils.fromWei(x[0], "wei").should.be.equal("0");
-        // web3.utils.fromWei(x[1], "wei").should.be.equal("0");
-        // web3.utils.fromWei(y[0], "wei").should.be.equal("1");
-        // web3.utils.fromWei(y[1], "wei").should.be.equal("2");
+  //   describe("spaceOf", function () {
+  //     it("gets the rood coordinates for a certain owner", async function () {
+  //       await space.spaceOf(user);
+  //       // console.log(x[0]);
+  //       // web3.utils.fromWei(x[0], "wei").should.be.equal("0");
+  //       // web3.utils.fromWei(x[1], "wei").should.be.equal("0");
+  //       // web3.utils.fromWei(y[0], "wei").should.be.equal("1");
+  //       // web3.utils.fromWei(y[1], "wei").should.be.equal("2");
+  //     });
+  //   });
+  // });
+
+  describe("TRANSFER SPACE TO ESTATE", function () {
+    let estateId;
+
+    beforeEach(async function () {
+      const estateAddr = await space.estateRegistry();
+      console.log("   Real Estate Address: ", estate.address);
+      console.log("   Estate Address     : ", estateAddr);
+      await space.assignMultipleRoods([3], [3], creator, sentByCreator);
+      estateId = await createEstate([3], [3], user, sentByCreator);
+
+      console.log("   Estate token ID    : ", estateId);
+    });
+
+    describe("transferSpaceToEstate", function () {
+      it("should not transfer the SPACE to an Estate if it is not owned by the sender", async function () {
+        await space.assignMultipleRoods([4], [4], operator, sentByCreator);
+        await assertRevert(
+          space.transferSpaceToEstate(4, 4, estateId, sentByOperator)
+        );
+      });
+
+      it("transfers SPACE to an Estate if it is called by owner", async function () {
+        await space.transferSpaceToEstate(0, 1, estateId, sentByUser);
+
+        let result = await space.spaceOf(estate.address);
+        const xEstate = result["0"];
+        const yEstate = result["1"];
+
+        result = await space.spaceOf(user);
+        const xNewUser = result["0"];
+        const yNewUser = result["1"];
+
+        web3.utils.fromWei(xEstate[0], "wei").should.be.equal("3");
+        web3.utils.fromWei(xEstate[1], "wei").should.be.equal("0");
+        web3.utils.fromWei(yEstate[0], "wei").should.be.equal("3");
+        web3.utils.fromWei(yEstate[1], "wei").should.be.equal("1");
+
+        xEstate.length.should.be.equal(2);
+        yEstate.length.should.be.equal(2);
+
+        web3.utils.fromWei(xNewUser[0], "wei").should.be.equal("0");
+        web3.utils.fromWei(yNewUser[0], "wei").should.be.equal("2");
+
+        xNewUser.length.should.be.equal(1);
+        yNewUser.length.should.be.equal(1);
       });
     });
   });

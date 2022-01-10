@@ -3,4 +3,5 @@ pragma solidity ^0.8.5;
 
 abstract contract IEstateRegistry {
     function ownerOf(uint256 tokenId) public view virtual returns (address owner); // from ERC721
+    function mint(address to, string memory metadata) external virtual returns (uint256);
 }

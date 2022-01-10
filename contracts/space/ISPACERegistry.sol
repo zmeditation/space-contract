@@ -11,6 +11,7 @@ interface ISPACERegistry {
     event SetSpaceBalanceToken(address indexed _previousSpaceBalance, address indexed _newSpaceBalance);
     event DeployAuthorized(address indexed _caller, address indexed _deployer);
     event DeployForbidden(address indexed _caller, address indexed _deployer);
+    event EstateRegistrySet(address indexed registry);
 
     // ======================================================
     // ********************  FUNCTIONS  *********************

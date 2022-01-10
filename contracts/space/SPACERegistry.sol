@@ -31,6 +31,11 @@ contract SPACERegistry is Storage, Ownable, FullAssetRegistry, ISPACERegistry {
         _;
     }
 
+    modifier onlyUpdateAuthorized(uint256 tokenId) {
+        require(msg.sender == _ownerOf(tokenId) || _isAuthorized(msg.sender, tokenId) || _isUpdateAuthorized(msg.sender, tokenId), "");
+        _;
+    }
+
     // =========================================================================
     // *********************  SPACE creating modules  **************************
     // =========================================================================
@@ -247,6 +252,40 @@ contract SPACERegistry is Storage, Ownable, FullAssetRegistry, ISPACERegistry {
 
         authorizedDeploy[beneficiary] = false;
         emit DeployForbidden(msg.sender, beneficiary);
+    }
+
+    // ===========================================================================
+    // ***************************  Estate  Functions  ***************************
+    // ===========================================================================
+
+    function setEstateRegistry(address registry) external onlyProxyOwner {
+        estateRegistry = IEstateRegistry(registry);
+        emit EstateRegistrySet(registry);
+    }
+
+    function _createEstate(int[] memory x, int[] memory y, address beneficiary, string memory metadata) internal returns (uint256) {
+        require(x.length > 0, "UNICIAL: You should supply at least one coordinate");
+        require(x.length == y.length, "UNICIAL: The coordinates should have the same length");
+        require(address(estateRegistry) != address(0), "UNICIAL: The Estate registry should be set");
+
+        uint256 estateTokenId = estateRegistry.mint(beneficiary, metadata);
+        bytes memory estateTokenIdBytes = toBytes(estateTokenId);
+
+        for (uint i = 0; i < x.length; i++) {
+            uint256 tokenId = _encodeTokenId(x[i], y[i]);
+            _doTransferFrom(_ownerOf(tokenId), address(estateRegistry), tokenId, estateTokenIdBytes, true);
+        }
+
+        return estateTokenId;
+    }
+
+    function createEstate(int[] memory x, int[] memory y, address beneficiary) external returns (uint256) {
+        return _createEstate(x, y, beneficiary, "");
+    }
+
+    function createEstateWithMetadata(int[] memory x, int[] memory y, address beneficiary, string memory metadata) external returns (uint256) {
+        // solium-disable-next-line arg-overflow
+        return _createEstate(x, y, beneficiary, metadata);
     }
 
     // ===========================================================================

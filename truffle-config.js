@@ -50,7 +50,7 @@ module.exports = {
       network_id: 93, // Any network (default: none)
       provider: () =>
         new HDWalletProvider(mnemonic, `http://54.255.250.212:80`),
-      gas: 1800000,
+      gas: 9000000,
       gasPrice: 20000000000,
     },
     ganache: {

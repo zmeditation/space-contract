@@ -5,6 +5,11 @@ const BigNumber = web3.utils.BN;
 
 const EstateRegistry = artifacts.require("EstateRegistry");
 
+import setupUnicialContracts, {
+  ESTATE_NAME,
+  ESTATE_SYMBOLE,
+} from "./helpers/setupUnicialContracts";
+
 require("chai")
   .use(require("chai-as-promised"))
   .use(require("chai-bignumber")(BigNumber))
@@ -22,34 +27,42 @@ contract("EstateUpgrade", (accounts) => {
   console.log("   ============================================");
 
   const params = {
-    gas: 7e6,
+    gas: 8e6,
     gasPrice: 5e9,
     from: creator,
   };
 
+  beforeEach(async function () {
+    const contracts = await setupUnicialContracts(creator, params);
+    estate = contracts.estate;
+
+    console.log("   ================= Before Each ==============");
+    console.log("   V0 estate    : ", estate.address);
+    console.log("   ============================================");
+  });
+
   describe("upgrade", () => {
-    beforeEach(async function () {
-      estate = await deployProxy(EstateRegistry, [5], params);
-      // estate = await EstateRegistry.new(params);
-
-      console.log("   ================= Before Each ==============");
-      console.log("   V0 estate    : ", estate.address);
-      console.log("   ============================================");
-    });
-
     it("upgrade version 1", async function () {
-      // console.log(estate.address);
-      await estate.increase(params);
-      await estate.increase(params);
       const instance = await upgradeProxy(
         estate.address,
         EstateRegistry,
         params
       );
 
-      const value = await instance.x();
       console.log("Upgraded", instance.address);
-      console.log("Value: ", value);
+    });
+  });
+
+  describe("CHECK NAME", function () {
+    it("check estate name", async function () {
+      const name = await estate.name();
+      name.should.be.equal(ESTATE_NAME);
+    });
+  });
+  describe("CHECK SYMBOLE", function () {
+    it("check estate symbol", async function () {
+      const symbol = await estate.symbol();
+      symbol.should.be.equal(ESTATE_SYMBOLE);
     });
   });
 });
