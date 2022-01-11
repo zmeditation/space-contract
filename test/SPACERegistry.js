@@ -54,6 +54,12 @@ contract("SPACERegistry", (accounts) => {
     space = contracts.space;
     estate = contracts.estate;
 
+    console.log("   ================= Before Each ==============");
+    console.log("   Proxy Address    : ", proxy.address);
+    console.log("   Registry Address : ", registry.address);
+    console.log("   Estate   Address : ", estate.address);
+    console.log("   ============================================");
+
     await space.authorizeDeploy(creator, sentByCreator);
     await space.assignNewRood(0, 1, user, sentByCreator);
     await space.assignNewRood(0, 2, user, sentByCreator);
